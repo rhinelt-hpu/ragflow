@@ -60,6 +60,9 @@ jobs:
 
       - name: Download dependencies
         run: |
+          echo "Installing Python dependencies..."
+          pip install nltk huggingface-hub
+          
           echo "Downloading dependencies for ARM64 build..."
           
           # Download dependencies
