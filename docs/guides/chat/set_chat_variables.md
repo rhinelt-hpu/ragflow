@@ -1,10 +1,8 @@
 ---
 sidebar_position: 4
 slug: /set_chat_variables
-sidebar_custom_props: {
-  categoryIcon: LucideVariable
-}
 ---
+
 # Set variables
 
 Set variables to be used together with the system prompt for your LLM.

@@ -15,7 +15,6 @@ import {
   useSubmitHunyuan,
   useSubmitMinerU,
   useSubmitOllama,
-  useSubmitPaddleOCR,
   useSubmitSpark,
   useSubmitSystemModelSetting,
   useSubmitTencentCloud,
@@ -29,7 +28,6 @@ import FishAudioModal from './modal/fish-audio-modal';
 import GoogleModal from './modal/google-modal';
 import HunyuanModal from './modal/hunyuan-modal';
 import MinerUModal from './modal/mineru-modal';
-import PaddleOCRModal from './modal/paddleocr-modal';
 import TencentCloudModal from './modal/next-tencent-modal';
 import OllamaModal from './modal/ollama-modal';
 import SparkModal from './modal/spark-modal';
@@ -140,14 +138,6 @@ const ModelProviders = () => {
     mineruLoading,
   } = useSubmitMinerU();
 
-  const {
-    paddleocrVisible,
-    hidePaddleOCRModal,
-    showPaddleOCRModal,
-    onPaddleOCROk,
-    paddleocrLoading,
-  } = useSubmitPaddleOCR();
-
   const ModalMap = useMemo(
     () => ({
       [LLMFactory.Bedrock]: showBedrockAddingModal,
@@ -160,7 +150,6 @@ const ModelProviders = () => {
       [LLMFactory.GoogleCloud]: showGoogleAddingModal,
       [LLMFactory.AzureOpenAI]: showAzureAddingModal,
       [LLMFactory.MinerU]: showMineruModal,
-      [LLMFactory.PaddleOCR]: showPaddleOCRModal,
     }),
     [
       showBedrockAddingModal,
@@ -173,7 +162,6 @@ const ModelProviders = () => {
       showGoogleAddingModal,
       showAzureAddingModal,
       showMineruModal,
-      showPaddleOCRModal,
     ],
   );
 
@@ -241,17 +229,15 @@ const ModelProviders = () => {
         onOk={onApiKeySavingOk}
         llmFactory={llmFactory}
       ></ApiKeyModal>
-      {llmAddingVisible && (
-        <OllamaModal
-          visible={llmAddingVisible}
-          hideModal={hideLlmAddingModal}
-          onOk={onLlmAddingOk}
-          loading={llmAddingLoading}
-          editMode={llmEditMode}
-          initialValues={llmInitialValues}
-          llmFactory={selectedLlmFactory}
-        ></OllamaModal>
-      )}
+      <OllamaModal
+        visible={llmAddingVisible}
+        hideModal={hideLlmAddingModal}
+        onOk={onLlmAddingOk}
+        loading={llmAddingLoading}
+        editMode={llmEditMode}
+        initialValues={llmInitialValues}
+        llmFactory={selectedLlmFactory}
+      ></OllamaModal>
       <VolcEngineModal
         visible={volcAddingVisible}
         hideModal={hideVolcAddingModal}
@@ -321,12 +307,6 @@ const ModelProviders = () => {
         onOk={onMineruOk}
         loading={mineruLoading}
       ></MinerUModal>
-      <PaddleOCRModal
-        visible={paddleocrVisible}
-        hideModal={hidePaddleOCRModal}
-        onOk={onPaddleOCROk}
-        loading={paddleocrLoading}
-      ></PaddleOCRModal>
     </div>
   );
 };

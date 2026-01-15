@@ -117,7 +117,7 @@ export const useSubmitOllama = () => {
   const [selectedLlmFactory, setSelectedLlmFactory] = useState<string>('');
   const [editMode, setEditMode] = useState(false);
   const [initialValues, setInitialValues] = useState<
-    Partial<IAddLlmRequestBody> & { provider_order?: string }
+    Partial<IAddLlmRequestBody> | undefined
   >();
   const { addLlm, loading } = useAddLlm();
   const {
@@ -474,8 +474,7 @@ export const useSubmitMinerU = () => {
     async (payload: MinerUFormValues) => {
       const cfg: any = {
         ...payload,
-        mineru_delete_output:
-          (payload.mineru_delete_output ?? true) ? '1' : '0',
+        mineru_delete_output: payload.mineru_delete_output ?? true ? '1' : '0',
       };
       if (payload.mineru_backend !== 'vlm-http-client') {
         delete cfg.mineru_server_url;
@@ -502,45 +501,5 @@ export const useSubmitMinerU = () => {
     showMineruModal,
     onMineruOk,
     mineruLoading: loading,
-  };
-};
-
-export const useSubmitPaddleOCR = () => {
-  const { addLlm, loading } = useAddLlm();
-  const {
-    visible: paddleocrVisible,
-    hideModal: hidePaddleOCRModal,
-    showModal: showPaddleOCRModal,
-  } = useSetModalState();
-
-  const onPaddleOCROk = useCallback(
-    async (payload: any) => {
-      const cfg: any = {
-        ...payload,
-      };
-      const req: IAddLlmRequestBody = {
-        llm_factory: LLMFactory.PaddleOCR,
-        llm_name: payload.llm_name,
-        model_type: 'ocr',
-        api_key: cfg,
-        api_base: '',
-        max_tokens: 0,
-      };
-      const ret = await addLlm(req);
-      if (ret === 0) {
-        hidePaddleOCRModal();
-        return true;
-      }
-      return false;
-    },
-    [addLlm, hidePaddleOCRModal],
-  );
-
-  return {
-    paddleocrVisible,
-    hidePaddleOCRModal,
-    showPaddleOCRModal,
-    onPaddleOCROk,
-    paddleocrLoading: loading,
   };
 };

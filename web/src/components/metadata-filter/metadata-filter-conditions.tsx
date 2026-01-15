@@ -20,11 +20,10 @@ import { useBuildSwitchOperatorOptions } from '@/hooks/logic-hooks/use-build-ope
 import { useFetchKnowledgeMetadata } from '@/hooks/use-knowledge-request';
 import { PromptEditor } from '@/pages/agent/form/components/prompt-editor';
 import { Plus, X } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
-import { useFieldArray, useFormContext, useWatch } from 'react-hook-form';
+import { useCallback } from 'react';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { LogicalOperator } from '../logical-operator';
-import { InputSelect } from '../ui/input-select';
 
 export function MetadataFilterConditions({
   kbIds,
@@ -62,94 +61,6 @@ export function MetadataFilterConditions({
     [append, fields.length, form, logic],
   );
 
-  const RenderField = ({
-    fieldName,
-    index,
-  }: {
-    fieldName: string;
-    index: number;
-  }) => {
-    const form = useFormContext();
-    const key = useWatch({ name: fieldName });
-    const valueOptions = useMemo(() => {
-      if (!key || !metadata?.data || !metadata?.data[key]) return [];
-      if (typeof metadata?.data[key] === 'object') {
-        return Object.keys(metadata?.data[key]).map((item: string) => ({
-          value: item,
-          label: item,
-        }));
-      }
-      return [];
-    }, [key]);
-
-    return (
-      <section className="flex gap-2">
-        <div className="flex-1 flex flex-col gap-2 min-w-0">
-          <div className="flex items-center gap-1">
-            <FormField
-              control={form.control}
-              name={fieldName}
-              render={({ field }) => (
-                <FormItem className="flex-1 overflow-hidden min-w-0">
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder={t('common.pleaseInput')}
-                    ></Input>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Separator className="w-1 text-text-secondary" />
-            <FormField
-              control={form.control}
-              name={`${name}.${index}.op`}
-              render={({ field }) => (
-                <FormItem className="flex-1 overflow-hidden min-w-0">
-                  <FormControl>
-                    <SelectWithSearch
-                      {...field}
-                      options={switchOperatorOptions}
-                    ></SelectWithSearch>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <FormField
-            control={form.control}
-            name={`${name}.${index}.value`}
-            render={({ field: valueField }) => (
-              <FormItem className="flex-1 overflow-hidden min-w-0">
-                <FormControl>
-                  {canReference ? (
-                    <PromptEditor
-                      {...valueField}
-                      multiLine={false}
-                      showToolbar={false}
-                    ></PromptEditor>
-                  ) : (
-                    <InputSelect
-                      placeholder={t('common.pleaseInput')}
-                      {...valueField}
-                      options={valueOptions}
-                      className="w-full"
-                    />
-                  )}
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <Button variant={'ghost'} onClick={() => remove(index)}>
-          <X className="text-text-sub-title-invert " />
-        </Button>
-      </section>
-    );
-  };
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -173,11 +84,73 @@ export function MetadataFilterConditions({
       </div>
       <section className="flex">
         {fields.length > 1 && <LogicalOperator name={logic}></LogicalOperator>}
-        <div className="space-y-5 flex-1 w-[calc(100%-56px)]">
+        <div className="space-y-5 flex-1">
           {fields.map((field, index) => {
             const typeField = `${name}.${index}.key`;
             return (
-              <RenderField key={field.id} fieldName={typeField} index={index} />
+              <section key={field.id} className="flex gap-2">
+                <div className="w-full space-y-2">
+                  <div className="flex items-center gap-1">
+                    <FormField
+                      control={form.control}
+                      name={typeField}
+                      render={({ field }) => (
+                        <FormItem className="flex-1 overflow-hidden">
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder={t('common.pleaseInput')}
+                            ></Input>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Separator className="w-1 text-text-secondary" />
+                    <FormField
+                      control={form.control}
+                      name={`${name}.${index}.op`}
+                      render={({ field }) => (
+                        <FormItem className="flex-1 overflow-hidden">
+                          <FormControl>
+                            <SelectWithSearch
+                              {...field}
+                              options={switchOperatorOptions}
+                            ></SelectWithSearch>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name={`${name}.${index}.value`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1 overflow-hidden">
+                        <FormControl>
+                          {canReference ? (
+                            <PromptEditor
+                              {...field}
+                              multiLine={false}
+                              showToolbar={false}
+                            ></PromptEditor>
+                          ) : (
+                            <Input
+                              placeholder={t('common.pleaseInput')}
+                              {...field}
+                            />
+                          )}
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <Button variant={'ghost'} onClick={() => remove(index)}>
+                  <X className="text-text-sub-title-invert " />
+                </Button>
+              </section>
             );
           })}
         </div>

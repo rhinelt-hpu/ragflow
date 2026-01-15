@@ -29,6 +29,7 @@ from common.misc_utils import get_uuid
 from common.constants import TaskStatus
 from common.time_utils import current_timestamp, timestamp_to_date
 
+
 class ConnectorService(CommonService):
     model = Connector
 
@@ -201,7 +202,6 @@ class SyncLogsService(CommonService):
             return None
 
         class FileObj(BaseModel):
-            id: str
             filename: str
             blob: bytes
 
@@ -209,7 +209,7 @@ class SyncLogsService(CommonService):
                 return self.blob
 
         errs = []
-        files = [FileObj(id=d["id"], filename=d["semantic_identifier"]+(f"{d['extension']}" if d["semantic_identifier"][::-1].find(d['extension'][::-1])<0 else ""), blob=d["blob"]) for d in docs]
+        files = [FileObj(filename=d["semantic_identifier"]+(f"{d['extension']}" if d["semantic_identifier"][::-1].find(d['extension'][::-1])<0 else ""), blob=d["blob"]) for d in docs]
         doc_ids = []
         err, doc_blob_pairs = FileService.upload_document(kb, files, tenant_id, src)
         errs.extend(err)

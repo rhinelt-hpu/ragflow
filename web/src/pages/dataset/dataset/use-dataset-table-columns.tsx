@@ -172,18 +172,17 @@ export function useDatasetTableColumns({
       ),
     },
     {
-      accessorKey: 'meta_fields',
-      header: t('metadata.metadata'),
+      accessorKey: 'run',
+      header: t('Parse'),
+      // meta: { cellClassName: 'min-w-[20vw]' },
       cell: ({ row }) => {
-        const length = Object.keys(row.getValue('meta_fields') || {}).length;
         return (
-          <div
-            className="capitalize cursor-pointer"
-            onClick={() => {
+          <ParsingStatusCell
+            record={row.original}
+            showChangeParserModal={showChangeParserModal}
+            showSetMetaModal={(row) =>
               showManageMetadataModal({
-                metadata: util.JSONToMetaDataTableData(
-                  row.original.meta_fields || {},
-                ),
+                metadata: util.JSONToMetaDataTableData(row.meta_fields || {}),
                 isCanAdd: true,
                 type: MetadataType.UpdateSingle,
                 record: row,
@@ -194,28 +193,13 @@ export function useDatasetTableColumns({
                     </div>
                     <div className="text-sm text-text-secondary w-full truncate">
                       {t('metadata.editMetadataForDataset')}
-                      {row.original.name}
+                      {row.name}
                     </div>
                   </div>
                 ),
                 isDeleteSingleValue: true,
-              });
-            }}
-          >
-            {length + ' fields'}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'run',
-      header: t('Parse'),
-      // meta: { cellClassName: 'min-w-[20vw]' },
-      cell: ({ row }) => {
-        return (
-          <ParsingStatusCell
-            record={row.original}
-            showChangeParserModal={showChangeParserModal}
+              })
+            }
             showLog={showLog}
           ></ParsingStatusCell>
         );

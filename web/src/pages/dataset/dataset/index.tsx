@@ -14,14 +14,13 @@ import { useRowSelection } from '@/hooks/logic-hooks/use-row-selection';
 import { useFetchDocumentList } from '@/hooks/use-document-request';
 import { useFetchKnowledgeBaseConfiguration } from '@/hooks/use-knowledge-request';
 import { Pen, Upload } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   MetadataType,
   useManageMetadata,
 } from '../components/metedata/hooks/use-manage-modal';
 import { ManageMetadataModal } from '../components/metedata/manage-modal';
-import { useKnowledgeBaseContext } from '../contexts/knowledge-base-context';
 import { DatasetTable } from './dataset-table';
 import Generate from './generate-button/generate';
 import { ReparseDialog } from './reparse-dialog';
@@ -39,7 +38,7 @@ export default function Dataset() {
     onDocumentUploadOk,
     documentUploadLoading,
   } = useHandleUploadDocument();
-  const { knowledgeBase } = useKnowledgeBaseContext();
+
   const {
     searchString,
     documents,
@@ -49,7 +48,6 @@ export default function Dataset() {
     filterValue,
     handleFilterSubmit,
     loading,
-    checkValue,
   } = useFetchDocumentList();
 
   const refreshCount = useMemo(() => {
@@ -76,10 +74,6 @@ export default function Dataset() {
     tableData,
     config: metadataConfig,
   } = useManageMetadata();
-
-  useEffect(() => {
-    checkValue(filters);
-  }, [filters]);
 
   const { rowSelection, rowSelectionIsEmpty, setRowSelection, selectedCount } =
     useRowSelection();
@@ -127,7 +121,6 @@ export default function Dataset() {
                   type: MetadataType.Manage,
                   isCanAdd: false,
                   isEditField: true,
-                  isDeleteSingleValue: true,
                   title: (
                     <div className="flex flex-col gap-2">
                       <div className="text-base font-normal">
@@ -223,11 +216,8 @@ export default function Dataset() {
         )}
         {reparseDialogVisible && (
           <ReparseDialog
-            hidden={
-              chunkNum === 0 && !knowledgeBase?.parser_config?.enable_metadata
-            }
-            // hidden={false}
-            enable_metadata={knowledgeBase?.parser_config?.enable_metadata}
+            // hidden={isZeroChunk || isRunning}
+            hidden={false}
             handleOperationIconClick={handleOperationIconClick}
             chunk_num={chunkNum}
             visible={reparseDialogVisible}

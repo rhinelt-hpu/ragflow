@@ -1,3 +1,4 @@
+import { SharedFrom } from '@/constants/chat';
 import {
   useSetModalState,
   useShowDeleteConfirm,
@@ -79,6 +80,11 @@ export const useShowBetaEmptyError = () => {
   return { showBetaEmptyError };
 };
 
+const getUrlWithToken = (token: string, from: string = 'chat') => {
+  const { protocol, host } = window.location;
+  return `${protocol}//${host}/chat/share?shared_id=${token}&from=${from}`;
+};
+
 const useFetchTokenListBeforeOtherStep = () => {
   const { showTokenEmptyError } = useShowTokenEmptyError();
   const { showBetaEmptyError } = useShowBetaEmptyError();
@@ -141,5 +147,33 @@ export const useShowEmbedModal = () => {
     embedVisible,
     embedToken: token,
     beta,
+  };
+};
+
+export const usePreviewChat = (idKey: string) => {
+  const { handleOperate } = useFetchTokenListBeforeOtherStep();
+
+  const open = useCallback(
+    (t: string) => {
+      window.open(
+        getUrlWithToken(
+          t,
+          idKey === 'canvasId' ? SharedFrom.Agent : SharedFrom.Chat,
+        ),
+        '_blank',
+      );
+    },
+    [idKey],
+  );
+
+  const handlePreview = useCallback(async () => {
+    const token = await handleOperate();
+    if (token) {
+      open(token);
+    }
+  }, [handleOperate, open]);
+
+  return {
+    handlePreview,
   };
 };

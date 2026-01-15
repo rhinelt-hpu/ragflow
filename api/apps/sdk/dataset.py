@@ -481,7 +481,7 @@ def list_datasets(tenant_id):
 
 @manager.route('/datasets/<dataset_id>/knowledge_graph', methods=['GET'])  # noqa: F821
 @token_required
-async def knowledge_graph(tenant_id, dataset_id):
+def knowledge_graph(tenant_id, dataset_id):
     if not KnowledgebaseService.accessible(dataset_id, tenant_id):
         return get_result(
             data=False,
@@ -497,7 +497,7 @@ async def knowledge_graph(tenant_id, dataset_id):
     obj = {"graph": {}, "mind_map": {}}
     if not settings.docStoreConn.index_exist(search.index_name(kb.tenant_id), dataset_id):
         return get_result(data=obj)
-    sres = await settings.retriever.search(req, search.index_name(kb.tenant_id), [dataset_id])
+    sres = settings.retriever.search(req, search.index_name(kb.tenant_id), [dataset_id])
     if not len(sres.ids):
         return get_result(data=obj)
 

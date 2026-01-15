@@ -8,10 +8,10 @@ import { Breadcrumb } from 'antd';
 import { ItemType } from 'antd/es/breadcrumb/Breadcrumb';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, Outlet } from 'react-router';
+import { Link, Outlet } from 'umi';
 import Siderbar from './components/knowledge-sidebar';
 import { KnowledgeDatasetRouteKey, KnowledgeRouteKey } from './constant';
-import styles from './index.module.less';
+import styles from './index.less';
 
 const KnowledgeAdding = () => {
   const knowledgeBaseId = useKnowledgeBaseId();

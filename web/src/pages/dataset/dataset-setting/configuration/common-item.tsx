@@ -23,17 +23,15 @@ import { LlmModelType } from '@/constants/knowledge';
 import { useTranslate } from '@/hooks/common-hooks';
 import { useComposeLlmOptionsByModelTypes } from '@/hooks/use-llm-request';
 import { cn } from '@/lib/utils';
-import { history } from '@/utils/simple-history-util';
 import { t } from 'i18next';
 import { Settings } from 'lucide-react';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ControllerRenderProps,
   FieldValues,
   useFormContext,
 } from 'react-hook-form';
-import { useLocation } from 'react-router';
-import { DataSetContext } from '..';
+import { useLocation } from 'umi';
 import {
   MetadataType,
   useManageMetadata,
@@ -373,7 +371,6 @@ export function AutoMetadata({
   // get metadata field
   const location = useLocation();
   const form = useFormContext();
-  const datasetContext = useContext(DataSetContext);
   const {
     manageMetadataVisible,
     showManageMetadataModal,
@@ -397,14 +394,13 @@ export function AutoMetadata({
     const locationState = location.state as
       | { openMetadata?: boolean }
       | undefined;
-    if (locationState?.openMetadata && !datasetContext?.loading) {
+    if (locationState?.openMetadata) {
       setTimeout(() => {
         handleClickOpenMetadata();
-      }, 0);
+      }, 100);
       locationState.openMetadata = false;
-      history.replace({ ...location }, locationState);
     }
-  }, [location, handleClickOpenMetadata, datasetContext]);
+  }, [location, handleClickOpenMetadata]);
 
   const autoMetadataField: FormFieldConfig = {
     name: 'parser_config.enable_metadata',
@@ -431,7 +427,6 @@ export function AutoMetadata({
 
   const handleSaveMetadata = (data?: IMetaDataReturnJSONSettings) => {
     form.setValue('parser_config.metadata', data || []);
-    form.setValue('parser_config.enable_metadata', true);
   };
   return (
     <>
@@ -516,6 +511,7 @@ export function LLMModelItem({ line = 1, isEdit, label, name }: IProps) {
               })}
             >
               <FormLabel
+                required
                 tooltip={t('globalIndexModelTip')}
                 className={cn('text-sm  whitespace-wrap ', {
                   'w-1/4': line === 1,

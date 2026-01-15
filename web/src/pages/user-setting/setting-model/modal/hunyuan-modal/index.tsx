@@ -1,14 +1,15 @@
-import {
-  DynamicForm,
-  FormFieldConfig,
-  FormFieldType,
-} from '@/components/dynamic-form';
-import { Modal } from '@/components/ui/modal/modal';
-import { useCommonTranslation, useTranslate } from '@/hooks/common-hooks';
+import { useTranslate } from '@/hooks/common-hooks';
 import { IModalProps } from '@/interfaces/common';
 import { IAddLlmRequestBody } from '@/interfaces/request/llm';
-import { FieldValues } from 'react-hook-form';
+import { Form, Input, Modal } from 'antd';
+import omit from 'lodash/omit';
 import { LLMHeader } from '../../components/llm-header';
+
+type FieldType = IAddLlmRequestBody & {
+  vision: boolean;
+  hunyuan_sid: string;
+  hunyuan_sk: string;
+};
 
 const HunyuanModal = ({
   visible,
@@ -17,73 +18,70 @@ const HunyuanModal = ({
   loading,
   llmFactory,
 }: IModalProps<IAddLlmRequestBody> & { llmFactory: string }) => {
+  const [form] = Form.useForm<FieldType>();
+
   const { t } = useTranslate('setting');
-  const { t: tc } = useCommonTranslation();
 
-  const fields: FormFieldConfig[] = [
-    {
-      name: 'hunyuan_sid',
-      label: t('addHunyuanSID'),
-      type: FormFieldType.Text,
-      required: true,
-      placeholder: t('HunyuanSIDMessage'),
-      validation: {
-        message: t('HunyuanSIDMessage'),
-      },
-    },
-    {
-      name: 'hunyuan_sk',
-      label: t('addHunyuanSK'),
-      type: FormFieldType.Text,
-      required: true,
-      placeholder: t('HunyuanSKMessage'),
-      validation: {
-        message: t('HunyuanSKMessage'),
-      },
-    },
-  ];
-
-  const handleOk = async (values?: FieldValues) => {
-    if (!values) return;
+  const handleOk = async () => {
+    const values = await form.validateFields();
+    const modelType =
+      values.model_type === 'chat' && values.vision
+        ? 'image2text'
+        : values.model_type;
 
     const data = {
-      hunyuan_sid: values.hunyuan_sid as string,
-      hunyuan_sk: values.hunyuan_sk as string,
+      ...omit(values, ['vision']),
+      model_type: modelType,
       llm_factory: llmFactory,
-    } as unknown as IAddLlmRequestBody;
+    };
+    console.info(data);
 
-    await onOk?.(data);
+    onOk?.(data);
+  };
+
+  const handleKeyDown = async (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      await handleOk();
+    }
   };
 
   return (
     <Modal
       title={<LLMHeader name={llmFactory} />}
-      open={visible || false}
-      onOpenChange={(open) => !open && hideModal?.()}
-      maskClosable={false}
-      footer={<div className="p-4"></div>}
-      className="max-w-[600px]"
+      open={visible}
+      onOk={handleOk}
+      onCancel={hideModal}
+      okButtonProps={{ loading }}
+      confirmLoading={loading}
     >
-      <DynamicForm.Root
-        fields={fields}
-        onSubmit={() => {}}
-        labelClassName="font-normal"
+      <Form
+        name="basic"
+        style={{ maxWidth: 600 }}
+        autoComplete="off"
+        layout={'vertical'}
+        form={form}
       >
-        <div className="absolute bottom-0 right-0 left-0 flex items-center justify-end w-full gap-2 py-6 px-6">
-          <DynamicForm.CancelButton
-            handleCancel={() => {
-              hideModal?.();
-            }}
+        <Form.Item<FieldType>
+          label={t('addHunyuanSID')}
+          name="hunyuan_sid"
+          rules={[{ required: true, message: t('HunyuanSIDMessage') }]}
+        >
+          <Input
+            placeholder={t('HunyuanSIDMessage')}
+            onKeyDown={handleKeyDown}
           />
-          <DynamicForm.SavingButton
-            submitLoading={loading || false}
-            buttonText={tc('ok')}
-            submitFunc={(values: FieldValues) => {
-              handleOk(values);
-            }}
+        </Form.Item>
+        <Form.Item<FieldType>
+          label={t('addHunyuanSK')}
+          name="hunyuan_sk"
+          rules={[{ required: true, message: t('HunyuanSKMessage') }]}
+        >
+          <Input
+            placeholder={t('HunyuanSKMessage')}
+            onKeyDown={handleKeyDown}
           />
-        </div>
-      </DynamicForm.Root>
+        </Form.Item>
+      </Form>
     </Modal>
   );
 };

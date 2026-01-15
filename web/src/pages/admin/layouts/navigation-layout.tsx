@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavLink, Outlet, useNavigate } from 'react-router';
+import { NavLink, Outlet, useNavigate } from 'umi';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
 

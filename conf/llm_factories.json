@@ -5531,14 +5531,6 @@
             "status": "1",
             "rank": "900",
             "llm": []
-        },
-        {
-            "name": "PaddleOCR",
-            "logo": "",
-            "tags": "OCR",
-            "status": "1",
-            "rank": "910",
-            "llm": []
         }
     ]
 }

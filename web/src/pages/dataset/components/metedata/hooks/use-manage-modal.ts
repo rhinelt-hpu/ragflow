@@ -12,7 +12,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { TFunction } from 'i18next';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router';
+import { useParams } from 'umi';
 import {
   IMetaDataReturnJSONSettings,
   IMetaDataReturnJSONType,
@@ -389,7 +389,6 @@ export const useManageMetaDataModal = (
       const { data: res } = await kbService.kbUpdateMetaData({
         kb_id: id,
         metadata: data,
-        enable_metadata: true,
       });
       if (res.code === 0) {
         message.success(t('message.operated'));

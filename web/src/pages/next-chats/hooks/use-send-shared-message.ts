@@ -10,7 +10,7 @@ import { message } from 'antd';
 import { get } from 'lodash';
 import trim from 'lodash/trim';
 import { useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { useSearchParams } from 'umi';
 import { v4 as uuid } from 'uuid';
 
 const isCompletionError = (res: any) =>
