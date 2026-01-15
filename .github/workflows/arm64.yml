@@ -58,11 +58,102 @@ jobs:
           flavor: |
             suffix=-arm64,onlatest=true
 
+      - name: Download dependencies
+        run: |
+          echo "Downloading dependencies for ARM64 build..."
+          
+          # Download dependencies
+          python3 download_deps.py
+          
+          # Create local deps directory
+          mkdir -p local_deps
+          
+          # Copy required files to local_deps
+          if [ -f "tika-server-standard-3.2.3.jar" ]; then
+            cp tika-server-standard-3.2.3.jar local_deps/
+            cp tika-server-standard-3.2.3.jar.md5 local_deps/
+          fi
+          
+          if [ -f "cl100k_base.tiktoken" ]; then
+            cp cl100k_base.tiktoken local_deps/
+          fi
+          
+          if [ -d "nltk_data" ]; then
+            cp -r nltk_data local_deps/
+          fi
+          
+          if [ -d "huggingface.co" ]; then
+            cp -r huggingface.co local_deps/
+          fi
+          
+          # Download UV for ARM64
+          wget -q https://github.com/astral-sh/uv/releases/download/0.9.16/uv-aarch64-unknown-linux-gnu.tar.gz -O local_deps/uv-aarch64-unknown-linux-gnu.tar.gz || true
+          
+          # Download libssl for ARM64
+          wget -q http://ports.ubuntu.com/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_arm64.deb -O local_deps/libssl1.1_1.1.1f-1ubuntu2_arm64.deb || true
+
+      - name: Create ARM64 Dockerfile
+        run: |
+          # Create an ARM64 compatible Dockerfile by modifying the original
+          cp Dockerfile Dockerfile.arm64
+          
+          # Replace the mount bind commands with local file copies
+          sed -i 's|--mount=type=bind,from=infiniflow/ragflow_deps:latest,source=/huggingface.co,target=/huggingface.co|# ARM64 build - using local deps|g' Dockerfile.arm64
+          sed -i 's|--mount=type=bind,from=infiniflow/ragflow_deps:latest,source=/,target=/deps|# ARM64 build - using local deps|g' Dockerfile.arm64
+          sed -i 's|--mount=type=bind,from=infiniflow/ragflow_deps:latest,source=/chrome-linux64-121-0-6167-85,target=/chrome-linux64.zip|# ARM64 build - skip Chrome|g' Dockerfile.arm64
+          sed -i 's|--mount=type=bind,from=infiniflow/ragflow_deps:latest,source=/chromedriver-linux64-121-0-6167-85,target=/chromedriver-linux64.zip|# ARM64 build - skip ChromeDriver|g' Dockerfile.arm64
+          
+          # Replace file paths to use local_deps
+          sed -i 's|/deps/|/local_deps/|g' Dockerfile.arm64
+          sed -i 's|uv-x86_64-unknown-linux-gnu|uv-aarch64-unknown-linux-gnu|g' Dockerfile.arm64
+          sed -i 's|libssl1.1_1.1.1f-1ubuntu2_amd64|libssl1.1_1.1.1f-1ubuntu2_arm64|g' Dockerfile.arm64
+          
+          # Add COPY commands for local dependencies at the beginning of the file
+          sed -i '/WORKDIR \/ragflow/a\
+          # Copy local dependencies for ARM64 build\
+          COPY local_deps /local_deps' Dockerfile.arm64
+          
+          # Add conditional commands to handle missing files gracefully
+          sed -i '/tar --exclude=/c\
+          RUN if [ -d "/local_deps/huggingface.co/InfiniFlow/text_concat_xgb_v1.0" ] && [ -d "/local_deps/huggingface.co/InfiniFlow/deepdoc" ]; then \\\
+              tar --exclude=".*" -cf - \\\
+                  /local_deps/huggingface.co/InfiniFlow/text_concat_xgb_v1.0 \\\
+                  /local_deps/huggingface.co/InfiniFlow/deepdoc \\\
+                  | tar -xf - --strip-components=4 -C /ragflow/rag/res/deepdoc; \\\
+          else \\\
+              echo "Warning: HuggingFace models not found in local_deps"; \\\
+          fi' Dockerfile.arm64
+          
+          # Make dependency copying conditional
+          sed -i '/cp -r \/local_deps\/nltk_data/c\
+          RUN if [ -d "/local_deps/nltk_data" ]; then cp -r /local_deps/nltk_data /root/; fi && \\\
+              if [ -f "/local_deps/tika-server-standard-3.2.3.jar" ]; then \\\
+                  cp /local_deps/tika-server-standard-3.2.3.jar /ragflow/ && \\\
+                  cp /local_deps/tika-server-standard-3.2.3.jar.md5 /ragflow/; \\\
+              else \\\
+                  echo "Downloading tika server..." && \\\
+                  wget -q https://repo1.maven.org/maven2/org/apache/tika/tika-server-standard/3.2.3/tika-server-standard-3.2.3.jar -O /ragflow/tika-server-standard-3.2.3.jar && \\\
+                  wget -q https://repo1.maven.org/maven2/org/apache/tika/tika-server-standard/3.2.3/tika-server-standard-3.2.3.jar.md5 -O /ragflow/tika-server-standard-3.2.3.jar.md5; \\\
+              fi && \\\
+              if [ -f "/local_deps/cl100k_base.tiktoken" ]; then \\\
+                  cp /local_deps/cl100k_base.tiktoken /ragflow/9b5ad71b2ce5302211f9c61530b329a4922fc6a4; \\\
+              else \\\
+                  echo "Downloading cl100k_base.tiktoken..." && \\\
+                  wget -q https://openaipublic.blob.core.windows.net/encodings/cl100k_base.tiktoken -O /ragflow/9b5ad71b2ce5302211f9c61530b329a4922fc6a4; \\\
+          # Remove Chrome and ChromeDriver installation steps for ARM64
+          sed -i '/unzip \/chrome-linux64.zip/,+2d' Dockerfile.arm64
+          sed -i '/unzip -j \/chromedriver-linux64.zip/,+3d' Dockerfile.arm64
+          
+          # Skip Chrome-related RUN commands
+          sed -i '/# Add dependencies of selenium/,/rm -f \/usr\/bin\/google-chrome/c\
+          # ARM64 build - Chrome/ChromeDriver not available, skipping selenium dependencies' Dockerfile.arm64
+
       - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ./Dockerfile.arm64
           platforms: linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -71,6 +162,7 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             NEED_MIRROR=0
+            TARGETPLATFORM=linux/arm64
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1

@@ -19,10 +19,10 @@ RUN --mount=type=bind,from=infiniflow/ragflow_deps:latest,source=/huggingface.co
 # This is the only way to run python-tika without internet access. Without this set, the default is to check the tika version and pull latest every time from Apache.
 RUN --mount=type=bind,from=infiniflow/ragflow_deps:latest,source=/,target=/deps \
     cp -r /deps/nltk_data /root/ && \
-    cp /deps/tika-server-standard-3.0.0.jar /deps/tika-server-standard-3.0.0.jar.md5 /ragflow/ && \
+    cp /deps/tika-server-standard-3.2.3.jar /deps/tika-server-standard-3.2.3.jar.md5 /ragflow/ && \
     cp /deps/cl100k_base.tiktoken /ragflow/9b5ad71b2ce5302211f9c61530b329a4922fc6a4
 
-ENV TIKA_SERVER_JAR="file:///ragflow/tika-server-standard-3.0.0.jar"
+ENV TIKA_SERVER_JAR="file:///ragflow/tika-server-standard-3.2.3.jar"
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Setup apt
@@ -64,10 +64,20 @@ RUN --mount=type=bind,from=infiniflow/ragflow_deps:latest,source=/,target=/deps 
         echo 'url = "https://pypi.tuna.tsinghua.edu.cn/simple"' >> /etc/uv/uv.toml && \
         echo 'default = true' >> /etc/uv/uv.toml; \
     fi; \
-    tar xzf /deps/uv-x86_64-unknown-linux-gnu.tar.gz \
-    && cp uv-x86_64-unknown-linux-gnu/* /usr/local/bin/ \
-    && rm -rf uv-x86_64-unknown-linux-gnu \
-    && uv python install 3.11
+    # Detect architecture and install UV accordingly \
+    ARCH=$(dpkg --print-architecture); \
+    if [ "$ARCH" = "amd64" ]; then \
+        tar xzf /deps/uv-x86_64-unknown-linux-gnu.tar.gz && \
+        cp uv-x86_64-unknown-linux-gnu/* /usr/local/bin/ && \
+        rm -rf uv-x86_64-unknown-linux-gnu; \
+    elif [ "$ARCH" = "arm64" ]; then \
+        # For ARM64, fall back to installer method since we don't have pre-built ARM64 UV \
+        curl -LsSf https://astral.sh/uv/install.sh | sh && \
+        cp /root/.cargo/bin/uv /usr/local/bin/; \
+    else \
+        echo "Unsupported architecture: $ARCH" && exit 1; \
+    fi; \
+    uv python install 3.11
 
 ENV PYTHONDONTWRITEBYTECODE=1 DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
 ENV PATH=/root/.local/bin:$PATH
